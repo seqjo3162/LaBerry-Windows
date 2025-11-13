@@ -26,8 +26,14 @@ object WebSocketManager {
         val token = SessionState.token ?: return
         val client = HttpClient(CIO) { install(WebSockets) }
         session = client.webSocketSession {
-            url("wss://laberry.loca.lt/ws/chat/$chatId?token=$token")
+            url {
+                protocol = URLProtocol.WSS
+                host = "laberry.loca.lt"
+                encodedPath = "/ws/chat/$chatId"
+                parameters.append("token", token)
+            }
         }
+
         scope.launch { listen() }
     }
 
@@ -53,7 +59,7 @@ object WebSocketManager {
     }
 
     suspend fun send(text: String) {
-        val s = session ?: return=9
+        val s = session ?: return
         val body = "{\"content\":\"" + text.replace("\"","'" ) + "\"}"
         s.send(Frame.Text(body))
     }

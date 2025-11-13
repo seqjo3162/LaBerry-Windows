@@ -17,7 +17,7 @@ import kotlinx.serialization.json.Json
  */
 object ApiClient {
 
-    private const val BASE_URL = "https://laberry.loca.lt"
+    internal const val BASE_URL = "https://laberry.loca.lt"
 
     val http = HttpClient(CIO) {
         install(ContentNegotiation) {
