@@ -25,7 +25,7 @@ fun ChatListUI() {
         Spacer(Modifier.height(12.dp))
 
         chats.forEach { chat ->
-            ChatItem(chat, current?.id == chat.id) {
+            ChatItem(chat, ChatState.currentChat.value?.id == chat.id) {
                 ChatState.selectChat(chat)
                 scope.launch { WebSocketManager.connect(chat.id) }
             }

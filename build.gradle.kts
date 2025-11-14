@@ -20,14 +20,14 @@ dependencies {
 
     // ░░ Ktor Client (CIO + JSON + WebSockets) ░░
     val ktor = "2.3.9"
-    implementation("io.ktor:ktor-client-core:$ktor")
     implementation("io.ktor:ktor-client-cio:$ktor")
+    implementation("io.ktor:ktor-client-core:$ktor")
+    implementation("io.ktor:ktor-client-logging:$ktor")
     implementation("io.ktor:ktor-client-websockets:$ktor")
     implementation("io.ktor:ktor-client-content-negotiation:$ktor")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor")
 
-    // ░░ Logging (полезно) ░░
-    implementation("io.ktor:ktor-client-logging:$ktor")
+    implementation("org.slf4j:slf4j-simple:2.0.9")
 }
 
 compose.desktop {

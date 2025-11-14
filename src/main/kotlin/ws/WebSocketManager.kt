@@ -1,13 +1,20 @@
 package ws
 
 import io.ktor.client.*
+import io.ktor.http.path
+import io.ktor.websocket.*
+import io.ktor.http.URLProtocol
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.websocket.*
-import io.ktor.websocket.*
+
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
+
 import state.SessionState
+import state.ChatState
+
+import models.MessageModel
 
 /**
  * WebSocket для live сообщений, статусов и т.п.
@@ -29,7 +36,7 @@ object WebSocketManager {
             url {
                 protocol = URLProtocol.WSS
                 host = "laberry.loca.lt"
-                encodedPath = "/ws/chat/$chatId"
+                path("ws", "chat", "$chatId")
                 parameters.append("token", token)
             }
         }
@@ -65,9 +72,13 @@ object WebSocketManager {
     }
 
     fun disconnect() {
-        try { session?.close() } catch(e: Exception) {}
+        val s = session
         session = null
+        if (s != null) {
+            scope.launch { try { s.close() } catch (_: Exception) {} }
+        }
     }
+
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
@@ -81,8 +92,11 @@ object WebSocketManager {
     fun stop() {
         reconnectJob?.cancel()
         reconnectJob = null
-        session?.close()
+        val s = session
         session = null
+        if (s != null) {
+            scope.launch { try { s.close() } catch (_: Exception) {} }
+        }
     }
 
     private suspend fun loop() {
@@ -100,12 +114,15 @@ object WebSocketManager {
     private suspend fun connect() {
         val token = SessionState.token ?: return
 
-        val client = HttpClient(CIO) {
-            install(WebSockets)
-        }
+        val client = HttpClient(CIO) { install(WebSockets) }
 
         session = client.webSocketSession {
-            url("$WS_URL?token=$token")
+            url {
+                protocol = URLProtocol.WSS
+                host = "laberry.loca.lt"
+                path("ws")
+                parameters.append("token", token)
+            }
         }
     }
 

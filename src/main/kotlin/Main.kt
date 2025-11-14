@@ -5,8 +5,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import state.SessionState
-import ui.AppShell
+import ui.screens.AppShell
 import ui.screens.LoginScreen
+import ui.navigation.Router
 
 private val LaBerryDarkColors = darkColors(
     primary = Color(0xFF5865F2),
@@ -20,15 +21,12 @@ private val LaBerryDarkColors = darkColors(
 )
 
 fun main() = application {
-    Window(onCloseRequest = ::exitApplication, title = "LaBerry-Windows") {
+    Window(
+        onCloseRequest = ::exitApplication,
+        title = "LaBerry-Windows"
+    ) {
         MaterialTheme(colors = LaBerryDarkColors) {
-            var authPassed by remember { mutableStateOf(false) }
-
-            if (SessionState.token == null && !authPassed) {
-                LoginScreen(onLoginSuccess = { authPassed = true })
-            } else {
-                AppShell()
-            }
+            Router()
         }
     }
 }

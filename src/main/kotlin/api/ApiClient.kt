@@ -2,9 +2,10 @@
 package api
 
 import io.ktor.client.*
-import io.ktor.client.engine.cio.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.http.contentType
+import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
@@ -17,7 +18,8 @@ import kotlinx.serialization.json.Json
  */
 object ApiClient {
 
-    internal const val BASE_URL = "https://laberry.loca.lt"
+    val BASE_URL: String
+        get() = config.ServerConfig.BASE_URL
 
     val http = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -44,6 +46,29 @@ object ApiClient {
         val avatar_url: String? = null,
         val status: String? = null,
     )
+
+    @Serializable
+    data class RegisterRequest(
+        val username: String,
+        val password: String,
+        val email: String? = null
+    )
+
+    suspend fun register(username: String, password: String): Boolean {
+        return try {
+            val resp: LoginResponse = http.post("${BASE_URL}/api/auth/register") {
+                contentType(io.ktor.http.ContentType.Application.Json)
+                setBody(RegisterRequest(username, password, null))
+                println("Register Request Sent to: ${BASE_URL}/api/auth/register")
+            }.body()
+
+            resp.access_token != null
+        } catch (e: Exception) {
+            println("REGISTER ERROR: ${e.message}")
+            println("Register Request Sent to: ${BASE_URL}/api/auth/register")
+            false
+        }
+    }
 
     suspend fun login(username: String, password: String): String? {
         return try {

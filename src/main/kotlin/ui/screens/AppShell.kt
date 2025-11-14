@@ -1,4 +1,4 @@
-package ui
+package ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,7 +20,18 @@ fun AppShell() {
 
     Surface(color = MaterialTheme.colors.background) {
         Row(Modifier.fillMaxSize()) {
-
+            when (UiState.activeSection.value) {
+                UiState.Section.FRIENDS -> FriendsScreen()
+                UiState.Section.SERVERS -> {
+                    Column(Modifier.weight(1f)) {
+                        ProfileBar()
+                        Row(Modifier.weight(1f)) {
+                            ChannelList()
+                            ChatArea()
+                        }
+                    }
+                }
+            }
             // Левая колонка — список «серверов»/DM
             ServerListUI(
                 onHomeClick = { showFriends = false },

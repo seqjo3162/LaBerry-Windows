@@ -4,29 +4,31 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import api.ApiClient
 import state.SessionState
 
 @Composable
-fun LoginScreen(
-    onLoginSuccess: () -> Unit,
-    onRegister: () -> Unit
+fun RegisterScreen(
+    onRegisterSuccess: () -> Unit,
+    goLogin: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
+
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-
-    val isLoading by remember { derivedStateOf { SessionState.isLoading } }
-    val error by remember { derivedStateOf { SessionState.error } }
+    var loading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
 
     Column(
-        Modifier
-            .fillMaxSize()
-            .padding(32.dp),
+        Modifier.fillMaxSize().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("LaBerry Login", style = MaterialTheme.typography.h4)
+        Text("Create Account", style = MaterialTheme.typography.h4)
+
         Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -52,26 +54,33 @@ fun LoginScreen(
         Button(
             onClick = {
                 scope.launch {
-                    val ok = SessionState.login(username, password)
-                    if (ok) onLoginSuccess()
+                    loading = true
+                    val ok = ApiClient.register(username, password)
+                    loading = false
+
+                    if (ok) {
+                        // сразу залогиним
+                        SessionState.login(username, password)
+                        onRegisterSuccess()
+                    } else {
+                        error = "Registration failed"
+                    }
                 }
             },
-            enabled = !isLoading,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Login")
+            Text(if (loading) "Loading..." else "Register")
         }
 
         Spacer(Modifier.height(8.dp))
 
-        // 👇 ЭТО КНОПКА РЕГИСТРАЦИИ
-        TextButton(onClick = onRegister, modifier = Modifier.fillMaxWidth()) {
-            Text("Create account")
+        TextButton(onClick = goLogin) {
+            Text("Already have an account? Login")
         }
 
         if (!error.isNullOrBlank()) {
             Spacer(Modifier.height(8.dp))
-            Text(error ?: "", color = MaterialTheme.colors.error)
+            Text(error!!, color = MaterialTheme.colors.error)
         }
     }
 }

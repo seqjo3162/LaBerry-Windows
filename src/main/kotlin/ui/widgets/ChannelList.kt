@@ -27,7 +27,7 @@ fun ChannelList() {
         Spacer(Modifier.height(12.dp))
 
         chats.forEach { chat ->
-            ChannelItem(chat, currentChat?.id == chat.id) {
+            ChannelItem(chat, ChatState.currentChat.value?.id == chat.id) {
                 ChatState.selectChat(chat)
                 scope.launch { WebSocketManager.connect(chat.id) }
             }
