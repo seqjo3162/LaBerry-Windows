@@ -20,6 +20,7 @@ dependencies {
 
     // ░░ Ktor Client (CIO + JSON + WebSockets) ░░
     val ktor = "2.3.9"
+
     implementation("io.ktor:ktor-client-cio:$ktor")
     implementation("io.ktor:ktor-client-core:$ktor")
     implementation("io.ktor:ktor-client-logging:$ktor")

@@ -8,7 +8,7 @@ import kotlinx.coroutines.runBlocking
 object ServerConfig {
 
     private const val LOCAL = "http://127.0.0.1:5001"
-    private const val REMOTE = "http://YOUR_EXTERNAL_IP:5001"
+    private const val REMOTE = "http://195.46.162.142:5001"
 
     private val client = HttpClient(CIO)
 

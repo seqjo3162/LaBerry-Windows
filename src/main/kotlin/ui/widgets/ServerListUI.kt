@@ -12,10 +12,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import state.ServerState
 import state.UiState
 
 @Composable
-fun ServerListUI() {
+fun ServerListUI(
+    onAddServerClick: () -> Unit = {}
+) {
+    val servers = ServerState.servers
+    val currentId = ServerState.currentServerId.value
+    val section = UiState.activeSection.value
+
     Column(
         modifier = Modifier
             .width(80.dp)
@@ -25,27 +32,35 @@ fun ServerListUI() {
     ) {
         Spacer(Modifier.height(8.dp))
 
-        // Верхний большой круг — «дом / друзья»
+        // Большой верхний круг – «Дом / Друзья»
         HomeButton(
-            selected = UiState.activeSection.value == UiState.Section.FRIENDS,
+            selected = section == UiState.Section.FRIENDS,
             onClick = { UiState.activeSection.value = UiState.Section.FRIENDS }
         )
 
         Spacer(Modifier.height(12.dp))
 
-        // Пример одного сервера (#1)
-        ServerCircle(
-            label = "#1",
-            selected = UiState.activeSection.value == UiState.Section.SERVERS,
-            onClick = { UiState.activeSection.value = UiState.Section.SERVERS }
-        )
+        if (servers.isEmpty()) {
+            // Нет серверов – только плюс
+            AddServerCircle(onClick = onAddServerClick)
+        } else {
+            servers.forEachIndexed { index, server ->
+                ServerCircle(
+                    label = "#${index + 1}",
+                    selected = section == UiState.Section.SERVERS &&
+                            currentId == server.id,
+                    onClick = { ServerState.selectServer(server.id) }
+                )
+            }
 
-        // Потом добавишь реальные сервера циклом
+            Spacer(Modifier.height(12.dp))
+            AddServerCircle(onClick = onAddServerClick)
+        }
     }
 }
 
 @Composable
-fun HomeButton(
+private fun HomeButton(
     selected: Boolean,
     onClick: () -> Unit
 ) {
@@ -70,7 +85,7 @@ fun HomeButton(
         Box(
             modifier = Modifier
                 .padding(start = 6.dp)
-                .size(46.dp)               // самый большой круг
+                .size(46.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colors.primary)
                 .clickable(onClick = onClick),
@@ -82,7 +97,7 @@ fun HomeButton(
 }
 
 @Composable
-fun ServerCircle(
+private fun ServerCircle(
     label: String,
     selected: Boolean,
     onClick: () -> Unit
@@ -108,13 +123,37 @@ fun ServerCircle(
         Box(
             modifier = Modifier
                 .padding(start = 6.dp)
-                .size(40.dp)              // поменьше, чем HomeButton
+                .size(40.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colors.primary)
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
             Text(label, color = MaterialTheme.colors.onPrimary)
+        }
+    }
+}
+
+@Composable
+private fun AddServerCircle(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(Modifier.width(4.dp))
+
+        Box(
+            modifier = Modifier
+                .padding(start = 6.dp)
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("+", color = MaterialTheme.colors.onSurface)
         }
     }
 }

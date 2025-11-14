@@ -1,24 +1,27 @@
 package state
 
-import androidx.compose.runtime.*
-import api.ServerApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import models.ServerModel
 
 object ServerState {
+    val servers = mutableStateListOf<ServerModel>()
+    val currentServerId = mutableStateOf<Int?>(null)
 
-    var servers by mutableStateOf<List<ServerModel>>(emptyList())
-    var currentServer by mutableStateOf<ServerModel?>(null)
+    val currentServer
+        get() = servers.firstOrNull { it.id == currentServerId.value }
 
-    suspend fun loadServers() {
-        val token = SessionState.token ?: return
-        servers = withContext(Dispatchers.IO) {
-            ServerApi.getServers(token)
+    fun setServers(list: List<ServerModel>) {
+        servers.clear()
+        servers.addAll(list)
+        currentServerId.value = list.firstOrNull()?.id
+        if (list.isEmpty()) {
+            UiState.activeSection.value = UiState.Section.FRIENDS
         }
     }
 
-    fun selectServer(server: ServerModel) {
-        currentServer = server
+    fun selectServer(id: Int) {
+        currentServerId.value = id
+        UiState.activeSection.value = UiState.Section.SERVERS
     }
 }

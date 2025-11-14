@@ -10,10 +10,17 @@ import models.MessageModel
 object ChatState {
     val chats = mutableStateListOf<ChatModel>()
 
-    // messages[chatId] = список сообщений в этом чате
     val messages = mutableStateMapOf<Int, SnapshotStateList<MessageModel>>()
 
     val currentChatId = mutableStateOf<Int?>(null)
+
+    val currentChat
+        get() = chats.firstOrNull { it.id == currentChatId.value }
+
+    fun selectChat(chat: ChatModel) {
+        currentChatId.value = chat.id
+        messages.putIfAbsent(chat.id, mutableStateListOf())
+    }
 
     fun setChats(list: List<ChatModel>) {
         chats.clear()

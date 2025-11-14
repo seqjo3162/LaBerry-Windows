@@ -59,7 +59,7 @@ object WebSocketManager {
                         content = json["content"]!!.jsonPrimitive.content,
                         timestamp = json["timestamp"]!!.jsonPrimitive.content
                     )
-                    ChatState.addMessage(msg)
+                    ChatState.addMessage(msg.chat_id, msg)
                 } catch(e: Exception) {}
             }
         }

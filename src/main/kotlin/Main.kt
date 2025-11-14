@@ -6,7 +6,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import state.SessionState
 import ui.screens.AppShell
-import ui.screens.LoginScreen
+import ui.screens.AuthScreen
 import ui.navigation.Router
 
 private val LaBerryDarkColors = darkColors(

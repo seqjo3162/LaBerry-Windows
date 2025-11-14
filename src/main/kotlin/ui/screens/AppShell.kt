@@ -4,81 +4,73 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import ui.widgets.ServerListUI
-import ui.widgets.ChannelList
-import ui.widgets.ChatArea
-import ui.widgets.FriendsList
-import ui.widgets.ProfileBar
+import state.UiState
+import ui.widgets.*
 
 @Composable
 fun AppShell() {
-    var showFriends by remember { mutableStateOf(false) }
+    val section = UiState.activeSection.value
 
     Surface(color = MaterialTheme.colors.background) {
         Row(Modifier.fillMaxSize()) {
-            when (UiState.activeSection.value) {
-                UiState.Section.FRIENDS -> FriendsScreen()
-                UiState.Section.SERVERS -> {
-                    Column(Modifier.weight(1f)) {
-                        ProfileBar()
-                        Row(Modifier.weight(1f)) {
-                            ChannelList()
-                            ChatArea()
-                        }
-                    }
-                }
-            }
-            // Левая колонка — список «серверов»/DM
+
             ServerListUI(
-                onHomeClick = { showFriends = false },
-                onFriendsClick = { showFriends = true },
+                onAddServerClick = {
+                    // TODO: открыть окно "создать / присоединиться по коду"
+                }
             )
 
-            if (showFriends) {
-                // Режим «Friends» как в Discord
-                Column(
-                    Modifier
-                        .width(260.dp)
-                        .fillMaxHeight()
-                        .background(Color(0xFF2B2D31))
-                ) {
-                    FriendsList()
-                    Spacer(Modifier.weight(1f))
-                    ProfileBar()
+            when (section) {
+                UiState.Section.FRIENDS -> {
+                    // Левый столбец друзей
+                    Column(
+                        Modifier
+                            .width(260.dp)
+                            .fillMaxHeight()
+                            .background(Color(0xFF2B2D31))
+                    ) {
+                        FriendsList()
+                        Spacer(Modifier.weight(1f))
+                        ProfileBar()
+                    }
+
+                    // Правая часть – детали / заглушка
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .background(Color(0xFF313338))
+                    ) {
+                        FriendsScreen() // или заглушка
+                    }
                 }
 
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .background(Color(0xFF313338))
-                ) {
-                    // Тут позже сделаем детальный экран друга / список запросов
-                }
-            } else {
-                // Обычный серверный режим: каналы + чат
-                Column(
-                    Modifier
-                        .width(260.dp)
-                        .fillMaxHeight()
-                        .background(Color(0xFF2B2D31))
-                ) {
-                    ChannelList()
-                    Spacer(Modifier.weight(1f))
-                    ProfileBar()
-                }
+                UiState.Section.SERVERS -> {
+                    // Столбец каналов
+                    Column(
+                        Modifier
+                            .width(260.dp)
+                            .fillMaxHeight()
+                            .background(Color(0xFF2B2D31))
+                    ) {
+                        ChannelList()
+                        Spacer(Modifier.weight(1f))
+                        ProfileBar()
+                    }
 
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .background(Color(0xFF313338))
-                ) {
-                    ChatArea()
+                    // Чат
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .background(Color(0xFF313338))
+                    ) {
+                        ChatArea()
+                    }
                 }
             }
         }
