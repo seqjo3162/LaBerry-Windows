@@ -12,6 +12,7 @@ import io.ktor.client.request.forms.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import config.ServerConfig
+import models.LoginResponse
 
 object ApiClient {
 
@@ -34,11 +35,12 @@ object ApiClient {
     // ----------------------------
 
     @Serializable
-    data class LoginResponse(
-        val access_token: String? = null,
-        val token_type: String? = null,
-        val user_id: Int? = null,
-        val requires_2fa: Boolean? = null
+    data class UserResponse(
+        val id: Int? = null,
+        val username: String? = null,
+        val display_name: String? = null,
+        val avatar_url: String? = null,
+        val status: String? = null
     )
 
     @Serializable
@@ -61,12 +63,24 @@ object ApiClient {
     // REGISTER (JSON)
     // ----------------------------
 
-    suspend fun register(username: String, password: String, email: String? = null): LoginResponse? {
+    suspend fun register(username: String, password: String, email: String?): LoginResponse? {
         return try {
-            http.post("$BASE_URL/api/auth/register") {
+            val resp = http.post("$BASE_URL/api/auth/register") {
                 contentType(ContentType.Application.Json)
                 setBody(RegisterRequest(username, password, email))
-            }.body()
+            }
+
+            val raw = resp.bodyAsText()
+            println("REGISTER RAW = $raw")
+
+            val parsed = Json.decodeFromString(LoginResponse.serializer(), raw)
+
+            println("TOKEN = ${parsed.access_token}")
+            println("2FA = ${parsed.requires_2fa}")
+            println("USER ID = ${parsed.user_id}")
+
+            parsed
+
         } catch (e: Exception) {
             println("REGISTER ERROR: ${e.message}")
             null
@@ -79,13 +93,21 @@ object ApiClient {
 
     suspend fun login(username: String, password: String): LoginResponse? {
         return try {
-            http.submitForm(
+            val resp = http.submitForm(
                 url = "$BASE_URL/api/auth/login",
                 formParameters = Parameters.build {
                     append("username", username)
                     append("password", password)
                 }
-            ).body()
+
+            )
+
+            val raw = resp.bodyAsText()
+            println("LOGIN RAW RESPONSE = $raw")
+            println("LOGIN STATUS = ${resp.status}")
+            println("LOGIN HEADERS = ${resp.headers.entries()}")
+
+            resp.body<LoginResponse>()
         } catch (e: Exception) {
             println("LOGIN ERROR: ${e.message}")
             null
@@ -98,15 +120,20 @@ object ApiClient {
 
     suspend fun verify2FA(userId: Int, code: String): LoginResponse? {
         return try {
-            http.submitForm(
+            val resp = http.submitForm(
                 url = "$BASE_URL/api/auth/verify-2fa",
                 formParameters = Parameters.build {
                     append("user_id", userId.toString())
                     append("code", code)
                 }
-            ).body()
+            )
+
+            val raw = resp.bodyAsText()
+            println("VERIFY 2FA RAW RESPONSE = $raw")
+
+            resp.body<LoginResponse>()
         } catch (e: Exception) {
-            println("2FA VERIFY ERROR: ${e.message}")
+            println("2FA ERROR: ${e.message}")
             null
         }
     }
@@ -115,13 +142,38 @@ object ApiClient {
     // GET ME
     // ----------------------------
 
-    suspend fun getMe(token: String): MeResponse? {
+    suspend fun getMe(token: String): UserResponse? {
         return try {
             http.get("$BASE_URL/api/users/me") {
-                header("Authorization", "Bearer $token")
-            }.body()
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }.body<UserResponse>()
         } catch (e: Exception) {
-            println("GET ME ERROR: ${e.message}")
+            null
+        }
+    }
+
+    // ----------------------------
+    // GENERIC GET REQUEST (Authorized)
+    // ----------------------------
+    suspend inline fun <reified T> authGet(path: String, token: String): T? {
+        return try {
+            http.get("$BASE_URL$path") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }.body<T>()
+        } catch (e: Exception) {
+            println("authGet ERROR: ${e.message}")
+            null
+        }
+    }
+
+    // ----------------------------
+    // GENERIC GET (no auth)
+    // ----------------------------
+    suspend inline fun <reified T> get(path: String): T? {
+        return try {
+            http.get("$BASE_URL$path").body<T>()
+        } catch (e: Exception) {
+            println("GET ERROR: ${e.message}")
             null
         }
     }

@@ -1,295 +1,217 @@
 package ui.screens
 
-import androidx.compose.runtime.*
-import androidx.compose.material.*
-import androidx.compose.ui.unit.dp
-import androidx.compose.animation.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.Alignment
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.border
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.ui.input.pointer.pointerInput
-import kotlinx.coroutines.delay
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
-import api.ApiClient
 import state.SessionState
 
-
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun AuthScreen(onSuccess: () -> Unit) {
-    var tab by remember { mutableStateOf(AuthTab.LOGIN) }
+fun AuthScreen(
+    onSuccess: () -> Unit
+) {
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    var isRegister by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
+
+    val error = SessionState.error
+    val loading = SessionState.isLoading
+    val rememberMe = SessionState.rememberMe
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF313338)),
         contentAlignment = Alignment.Center
     ) {
+
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(420.dp)
-        ) {
-            // переключатель вкладок
-            Row {
-                AuthTabButton(
-                    text = "Login",
-                    isActive = tab == AuthTab.LOGIN,
-                    onClick = { tab = AuthTab.LOGIN }
-                )
-                Spacer(Modifier.width(16.dp))
-                AuthTabButton(
-                    text = "Register",
-                    isActive = tab == AuthTab.REGISTER,
-                    onClick = { tab = AuthTab.REGISTER }
-                )
-            }
-
-            Spacer(Modifier.height(28.dp))
-
-            AnimatedContent(
-                targetState = tab,
-                transitionSpec = {
-                    fadeIn(animationSpec = tween(250)) togetherWith fadeOut(animationSpec = tween(250))
-                }
-            ) { current ->
-                when (current) {
-                    AuthTab.LOGIN -> LoginPanel(onSuccess = onSuccess) { tab = AuthTab.REGISTER }
-                    AuthTab.REGISTER -> RegisterPanel(onSuccess = onSuccess) { tab = AuthTab.LOGIN }
-                }
-            }
-        }
-    }
-}
-
-enum class AuthTab { LOGIN, REGISTER }
-
-@Composable
-fun AuthTabButton(text: String, isActive: Boolean, onClick: () -> Unit) {
-    Text(
-        text = text,
-        modifier = Modifier.clickable(
-            indication = null,
-            interactionSource = remember { MutableInteractionSource() }
-        ) { onClick() },
-        color = if (isActive) Color(0xFF5865F2) else Color(0xFF999999),
-        fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
-    )
-}
-
-@Composable
-fun DiscordField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String
-) {
-    var focused by remember { mutableStateOf(false) }
-    var pressed by remember { mutableStateOf(false) }
-
-    val activeColor = Color(0xFF5865F2)
-    val pressedColor = Color(0xFF505050)
-    val normalBorder = Color(0xFFCCCCCC)
-
-    val borderColor by animateColorAsState(
-        targetValue = when {
-            pressed -> pressedColor
-            focused -> activeColor
-            else -> normalBorder
-        },
-        animationSpec = tween(160)
-    )
-
-    Column {
-        Text(
-            placeholder.uppercase(),
-            color = Color(0xFF555555),
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
-        )
-
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            singleLine = true,
-            textStyle = LocalTextStyle.current.copy(
-                color = activeColor,
-                fontSize = MaterialTheme.typography.body1.fontSize
-            ),
-            cursorBrush = SolidColor(activeColor),
-
             modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged { focused = it.isFocused }
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onPress = {
-                            pressed = true
-                            tryAwaitRelease()
-                            pressed = false
-                        }
+                .width(380.dp)
+                .shadow(18.dp, RoundedCornerShape(12.dp))
+                .background(Color(0xFF2B2D31), RoundedCornerShape(12.dp))
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            // ------------ TITLE ------------
+            Text(
+                if (!isRegister) "Welcome back!"
+                else "Create your account",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 26.sp
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                if (!isRegister) "We're so excited to see you again!"
+                else "Join the LaBerry community!",
+                color = Color(0xFFB9BBBE),
+                fontSize = 14.sp
+            )
+
+            Spacer(Modifier.height(24.dp))
+
+            // ------------ USERNAME LABEL ------------
+            Text(
+                "USERNAME",
+                color = Color(0xFFB9BBBE),
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 12.sp,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(6.dp))
+
+            // ------------ USERNAME INPUT ------------
+            TextField(
+                value = username,
+                onValueChange = { username = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFF1E1F22),
+                    unfocusedContainerColor = Color(0xFF1E1F22),
+                    focusedIndicatorColor = Color(0xFF5865F2),
+                    unfocusedIndicatorColor = Color.Transparent,
+                    cursorColor = Color.White,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            // ------------ PASSWORD LABEL ------------
+            Text(
+                "PASSWORD",
+                color = Color(0xFFB9BBBE),
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 12.sp,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(6.dp))
+
+            // ------------ PASSWORD INPUT ------------
+            TextField(
+                value = password,
+                onValueChange = { password = it },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFF1E1F22),
+                    unfocusedContainerColor = Color(0xFF1E1F22),
+                    focusedIndicatorColor = Color(0xFF5865F2),
+                    unfocusedIndicatorColor = Color.Transparent,
+                    cursorColor = Color.White,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+
+            Spacer(Modifier.height(10.dp))
+
+            // ------------ REMEMBER ME (only login) ------------
+            if (!isRegister) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = rememberMe,
+                        onCheckedChange = { SessionState.rememberMe = it },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = Color(0xFF5865F2)
+                        )
+                    )
+                    Text(
+                        "Keep me logged in",
+                        color = Color(0xFFB9BBBE)
                     )
                 }
-                .background(Color.White, RoundedCornerShape(8.dp))
-                .border(2.dp, borderColor, RoundedCornerShape(8.dp))
-                .padding(horizontal = 12.dp, vertical = 12.dp),
 
-            decorationBox = { innerTextField: @Composable () -> Unit ->
-            Box(
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    if (value.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            color = Color(0xFF777777)
-                        )
-                    }
-                    innerTextField()
-                }
+                Spacer(Modifier.height(20.dp))
+            } else {
+                Spacer(Modifier.height(30.dp))
             }
-        )
-    }
-}
 
-@Composable
-fun AnimatedErrorText(full: String?) {
-    if (full.isNullOrBlank()) return
-
-    var showText by remember { mutableStateOf("") }
-
-    LaunchedEffect(full) {
-        showText = ""
-        for (i in full.indices) {
-            showText = full.substring(0, i + 1)
-            delay(12) // скорость "печати"
-        }
-    }
-
-    Text(
-        showText,
-        color = Color(0xFFFF5555),
-        modifier = Modifier.padding(top = 12.dp)
-    )
-}
-
-@Composable
-fun LoginPanel(onSuccess: () -> Unit, goRegister: () -> Unit) {
-    val scope = rememberCoroutineScope()
-
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var code2FA by remember { mutableStateOf("") }
-
-    val isLoading = SessionState.isLoading
-    val error = SessionState.error
-    val pending2FA = SessionState.pending2FAUserId != null
-
-    Column(
-        modifier = Modifier.width(420.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (!pending2FA) {
-            DiscordField(username, { username = it }, "Username")
-            Spacer(Modifier.height(12.dp))
-            DiscordField(password, { password = it }, "Password")
-
-            Spacer(Modifier.height(20.dp))
-
+            // ------------ ACTION BUTTON (LOGIN or REGISTER) ------------
             Button(
                 onClick = {
                     scope.launch {
-                        val ok = SessionState.login(username, password)
+                        val ok = if (!isRegister) {
+                            // LOGIN
+                            SessionState.login(username.trim(), password.trim())
+                        } else {
+                            // REGISTER → auto-login
+                            val regOk = SessionState.register(username.trim(), password.trim())
+                            if (regOk) SessionState.login(username.trim(), password.trim())
+                            else false
+                        }
+
                         if (ok) onSuccess()
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
-            ) { Text("Login") }
-
-        } else {
-            DiscordField(code2FA, { code2FA = it }, "2FA Code")
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp),
+                shape = RoundedCornerShape(6.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF5865F2)
+                ),
+                enabled = !loading
+            ) {
+                Text(
+                    if (loading) "Loading..."
+                    else if (!isRegister) "Login"
+                    else "Register",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
             Spacer(Modifier.height(20.dp))
 
-            Button(
-                onClick = {
-                    scope.launch {
-                        val ok = SessionState.verify2FA(code2FA)
-                        if (ok) onSuccess()
+            // ------------ MODE SWITCH (LOGIN <-> REGISTER) ------------
+            Row {
+                Text(
+                    if (!isRegister) "Need an account? "
+                    else "Already have an account? ",
+                    color = Color(0xFFB9BBBE)
+                )
+                Text(
+                    if (!isRegister) "Register"
+                    else "Login",
+                    color = Color(0xFF5865F2),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable {
+                        isRegister = !isRegister
                     }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
-            ) { Text("Verify Code") }
-        }
+                )
+            }
 
-        TextButton(onClick = goRegister) {
-            Text("Create account")
+            // ------------ ERROR MESSAGE ------------
+            if (error != null) {
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    error,
+                    color = Color.Red,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
-
-        AnimatedErrorText(error)
     }
-}
-
-@Composable
-fun RegisterPanel(onSuccess: () -> Unit, goLogin: () -> Unit) {
-    val scope = rememberCoroutineScope()
-
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var localError by remember { mutableStateOf<String?>(null) }
-
-    Column(
-        modifier = Modifier.width(420.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        DiscordField(username, { username = it }, "Username")
-        Spacer(Modifier.height(12.dp))
-        DiscordField(password, { password = it }, "Password")
-
-        Spacer(Modifier.height(20.dp))
-
-        Button(
-            onClick = {
-                scope.launch {
-                    val ok = ApiClient.register(username, password)
-                    if (ok) {
-                        SessionState.login(username, password)
-                        onSuccess()
-                    } else {
-                        localError = "Registration failed"
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Register")
-        }
-
-        TextButton(onClick = goLogin) {
-            Text("Already have an account? Login")
-        }
-
-        AnimatedErrorText(localError)
-    }
-}
-
-@Composable
-fun ThemeSwitcher(onToggle: () -> Unit) {
-    Text(
-        "Theme",
-        modifier = Modifier
-            .padding(16.dp)
-            .clickable { onToggle() },
-        color = Color(0xFF5865F2),
-        fontWeight = FontWeight.Bold
-    )
 }
